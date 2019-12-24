@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include <atlstr.h>
 #include "trace.h"
+#include <iostream>
 
 
 /**
@@ -86,7 +87,17 @@ extern "C"
 			}
 			va_end(argList);
 			std::string logMsg=static_cast<std::ostringstream*>( &(std::ostringstream() << ::GetCurrentProcessId() << "," << ::GetCurrentThreadId() << "," << functionName << ", " <<  szMsg) )->str();
-			Write(level, logMsg.c_str());
+			//Write(level, logMsg.c_str());
+
+			using namespace std;
+
+			freopen( "output.txt", "w", stdout );
+			cout << logMsg << endl;
+
+			string filePath = "debug.log";
+			ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app );
+			ofs << logMsg << '\n';
+			ofs.close();
 	}
 	
 }
