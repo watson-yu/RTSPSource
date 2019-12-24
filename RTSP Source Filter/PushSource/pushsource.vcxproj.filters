@@ -47,6 +47,9 @@
     <ClCompile Include="PushPinRTSP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CVCam.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PushSource.def">
@@ -76,6 +79,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CVCam.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -171,6 +171,7 @@ copy "$(SolutionDir)ffmpeg\bin\*.dll" "$(OutDir)"
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CVCam.cpp" />
     <ClCompile Include="PushPinRTSP.cpp" />
     <ClCompile Include="PushSourceRTSP.cpp" />
     <ClCompile Include="setup.cpp" />
@@ -181,6 +182,7 @@ copy "$(SolutionDir)ffmpeg\bin\*.dll" "$(OutDir)"
     <None Include="PushSource.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CVCam.h" />
     <ClInclude Include="PushGuids.h" />
     <ClInclude Include="PushPin.h" />
     <ClInclude Include="PushSource.h" />
