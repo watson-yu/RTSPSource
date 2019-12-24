@@ -1,0 +1,16 @@
+ipch/
+live/BasicUsageEnvironment/Debug/
+live/groupsock/Debug/
+live/lib/
+live/liveMedia/Debug/
+live/UsageEnvironment/Debug/
+LiveProxy.opensdf
+LiveProxy.sdf
+LiveProxy/bin/
+LiveProxy/Debug/
+RTSP DS Filter.opensdf
+RTSP DS Filter.sdf
+RTSP DS Filter/HelpLib/bin/Debug/
+RTSP DS Filter/HelpLib/obj/Debug/
+RTSP DS Filter/PushSource/Debug/
+Debug/
