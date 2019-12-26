@@ -212,3 +212,12 @@ char const* dateHeader() {
 #endif
   return buf;
 }
+
+void log(char const*msg) {
+	if (msg) {
+		FILE *fp = fopen("debug2.log", "w+");
+		fprintf(fp, msg);
+		fprintf(fp, "\n");
+		fclose(fp);
+	}
+}

@@ -71,6 +71,7 @@ Keep retrieving frames from the source
 */
 Boolean H264VideoSink::continuePlaying() 
 {
+	TRACE_INFO("continuePlaying");
 	if (fSource == NULL) 
 	{
 		TRACE_ERROR("no source for continue play");
@@ -87,7 +88,7 @@ Called by the live555 code once we have a frame
 void H264VideoSink::afterGettingFrame(void* clientData, unsigned frameSize, unsigned numTruncatedBytes,
 				  struct timeval presentationTime, unsigned durationInMicroseconds) 
 {
-	TRACE_DEBUG("afterGettingFrame. FrameSize=%d",frameSize);
+	TRACE_INFO("afterGettingFrame. FrameSize=%d",frameSize);
 	H264VideoSink* sink = (H264VideoSink*)clientData;
 	sink->afterGettingFrame1(frameSize, presentationTime);
 	if (sink->continuePlaying() == false)
@@ -102,6 +103,7 @@ Prepare the video frame for decoding
 */
 void H264VideoSink::afterGettingFrame1(unsigned frameSize, struct timeval presentationTime) 
 {
+	TRACE_INFO("afterGettingFrame1");
     int got_frame = 0; 
     unsigned int size = frameSize;
     unsigned char *pBuffer = m_buffer + m_fPos;

@@ -176,7 +176,7 @@ int CPushPinRTSP::QueryVideo(TransportUrl * url)
 	MediaInfo videoMediaInfo;
 	try{
 		TRACE_INFO("Get Media Info");
-		ret= m_streamMedia->rtspClinetGetMediaInfo(CODEC_TYPE_VIDEO, videoMediaInfo);
+		ret= m_streamMedia->rtspClientGetMediaInfo(CODEC_TYPE_VIDEO, videoMediaInfo);
 		if(ret < 0)
 		{	
 			TRACE_CRITICAL( "Unable to get media info from RTSP stream.  ret=%d (url=%s)", ret,url->get_Url());

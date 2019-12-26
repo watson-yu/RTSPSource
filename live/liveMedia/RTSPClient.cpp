@@ -140,6 +140,7 @@ unsigned RTSPClient::sendGetParameterCommand(MediaSession& session, responseHand
 
 Boolean RTSPClient::changeResponseHandler(unsigned cseq, responseHandler* newResponseHandler) { 
   // Look for the matching request record in each of our 'pending requests' queues:
+	log("changeResponseHandler");
   RequestRecord* request;
   if ((request = fRequestsAwaitingConnection.findByCSeq(cseq)) != NULL
       || (request = fRequestsAwaitingHTTPTunneling.findByCSeq(cseq)) != NULL
@@ -287,6 +288,8 @@ RTSPClient::RTSPClient(UsageEnvironment& env, char const* rtspURL,
     fUserAgentHeaderStr(NULL), fUserAgentHeaderStrLen(0), fInputSocketNum(-1), fOutputSocketNum(-1), fServerAddress(0), fCSeq(1),
     fBaseURL(NULL), fTCPStreamIdCount(0), fLastSessionId(NULL), fSessionTimeoutParameter(0),
     fSessionCookieCounter(0), fHTTPTunnelingConnectionIsPending(False) {
+	log("RTSPClient constructor");
+
   setBaseURL(rtspURL);
 
   fResponseBuffer = new char[responseBufferSize+1];
@@ -322,6 +325,7 @@ Boolean RTSPClient::isRTSPClient() const {
 }
 
 void RTSPClient::reset() {
+	log("RTSPClient::reset");
   resetTCPSockets();
   resetResponseBuffer();
   fServerAddress = 0;
@@ -334,6 +338,7 @@ void RTSPClient::reset() {
 }
 
 void RTSPClient::resetTCPSockets() {
+	log("RTSPClient::resetTCPSockets");
   if (fInputSocketNum >= 0) {
     envir().taskScheduler().disableBackgroundHandling(fInputSocketNum);
     ::closeSocket(fInputSocketNum);
@@ -346,6 +351,7 @@ void RTSPClient::resetTCPSockets() {
 }
 
 void RTSPClient::resetResponseBuffer() {
+	log("RTSPClient::resetResponseBuffer");
   fResponseBytesAlreadySeen = 0;
   fResponseBufferBytesLeft = responseBufferSize;
 }
@@ -495,6 +501,10 @@ static char* createRangeString(double start, double end) {
 }
 
 unsigned RTSPClient::sendRequest(RequestRecord* request) {
+  log("########## sendReuest");
+  if (request) {
+	  log(request->commandName());
+  }
   char* cmd = NULL;
   do {
     Boolean connectionIsPending = False;
@@ -778,6 +788,9 @@ unsigned RTSPClient::sendRequest(RequestRecord* request) {
 }
 
 void RTSPClient::handleRequestError(RequestRecord* request) {
+  log("########## handleRequestError");
+  if (request) log(request->commandName());
+
   int resultCode = -envir().getErrno();
   if (resultCode == 0) {
     // Choose some generic error code instead:
@@ -792,6 +805,8 @@ void RTSPClient::handleRequestError(RequestRecord* request) {
 
 Boolean RTSPClient
 ::parseResponseCode(char const* line, unsigned& responseCode, char const*& responseString) {
+  log("########## parseResponseCode");
+  if (line) log(line);
   if (sscanf(line, "RTSP/%*s%u", &responseCode) != 1 &&
       sscanf(line, "HTTP/%*s%u", &responseCode) != 1) return False;
   // Note: We check for HTTP responses as well as RTSP responses, both in order to setup RTSP-over-HTTP tunneling,
@@ -806,6 +821,7 @@ Boolean RTSPClient
 }
 
 void RTSPClient::handleIncomingRequest() {
+	log("########## handleIncomingRequest");
   // Parse the request string into command name and 'CSeq', then 'handle' the command (by responding that we don't support it):
   char cmdName[RTSP_PARAM_STRING_MAX];
   char urlPreSuffix[RTSP_PARAM_STRING_MAX];
@@ -948,6 +964,7 @@ Boolean RTSPClient::parseRTPInfoParams(char const*& paramsStr, u_int16_t& seqNum
 
 Boolean RTSPClient::handleSETUPResponse(MediaSubsession& subsession, char const* sessionParamsStr, char const* transportParamsStr,
                                         Boolean streamUsingTCP) {
+  log("########## handleSETUPResponse");
   char* sessionId = new char[responseBufferSize]; // ensures we have enough space
   Boolean success = False;
   do {
@@ -1004,6 +1021,19 @@ Boolean RTSPClient::handleSETUPResponse(MediaSubsession& subsession, char const*
 
 Boolean RTSPClient::handlePLAYResponse(MediaSession& session, MediaSubsession& subsession,
                                        char const* scaleParamsStr, char const* rangeParamsStr, char const* rtpInfoParamsStr) {
+	log("########## handlePLAYResponse");
+	if (scaleParamsStr) {
+		log("scaleParams:");
+		log(scaleParamsStr);
+	}
+	if (rangeParamsStr) {
+		log("rangeParams:");
+		log(rangeParamsStr);
+	}
+	if (rtpInfoParamsStr) {
+		log("rtpInfoParams");
+		log(rtpInfoParamsStr);
+	}
   Boolean scaleOK = False, rangeOK = False;
   do {
     if (&session != NULL) {
@@ -1048,10 +1078,13 @@ Boolean RTSPClient::handlePLAYResponse(MediaSession& session, MediaSubsession& s
 
   // An error occurred:
   if (!scaleOK) {
+	  log("Bad scale header");
     envir().setResultMsg("Bad \"Scale:\" header");
   } else if (!rangeOK) {
+	  log("Bad range header");
     envir().setResultMsg("Bad \"Range:\" header");
   } else {
+	  log("Bad RTP info header");
     envir().setResultMsg("Bad \"RTP-Info:\" header");
   }
   return False;
@@ -1108,6 +1141,9 @@ Boolean RTSPClient::handleGET_PARAMETERResponse(char const* parameterName, char*
 }
 
 Boolean RTSPClient::handleAuthenticationFailure(char const* paramsStr) {
+	log("########## handleAuthenticationFailure");
+	if (paramsStr) log(paramsStr);
+
   if (paramsStr == NULL) return False; // There was no "WWW-Authenticate:" header; we can't proceed.
 
   // Fill in "fCurrentAuthenticator" with the information from the "WWW-Authenticate:" header:
@@ -1312,6 +1348,7 @@ void RTSPClient::incomingDataHandler(void* instance, int /*mask*/) {
 }
 
 void RTSPClient::incomingDataHandler1() {
+  log("########## incomingDataHandler1");
   struct sockaddr_in dummy; // 'from' address - not used
 
   int bytesRead = readSocket(envir(), fInputSocketNum, (unsigned char*)&fResponseBuffer[fResponseBytesAlreadySeen], fResponseBufferBytesLeft, dummy);
@@ -1338,6 +1375,7 @@ static char* getLine(char* startOfLine) {
 }
 
 void RTSPClient::handleResponseBytes(int newBytesRead) {
+	log("handleResponseBytes");
   do {
     if (newBytesRead > 0 && (unsigned)newBytesRead < fResponseBufferBytesLeft) break; // data was read OK; process it below
 
@@ -1698,7 +1736,10 @@ char* RTSPClient::sendOptionsCmd(char const* url,
 				 int timeout) {
   char* result = NULL;
   Boolean haveAllocatedAuthenticator = False;
-  if (authenticator == NULL) {
+  
+  log("SKIP authentication");
+
+  if (FALSE && authenticator == NULL) {
     // First, check whether "url" contains a username:password to be used
     // (and no username,password pair was supplied separately):
     if (username == NULL && password == NULL
@@ -1790,6 +1831,7 @@ Boolean RTSPClient::setupMediaSubsession(MediaSubsession& subsession,
 
 Boolean RTSPClient::playMediaSession(MediaSession& session,
 				     double start, double end, float scale) {
+	log("playMediaSession");
   fWatchVariableForSyncInterface = 0;
   fTimeoutTask = NULL;
   (void)sendPlayCommand(session, responseHandlerForSyncInterface, start, end, scale);
@@ -1803,6 +1845,7 @@ Boolean RTSPClient::playMediaSession(MediaSession& session,
 Boolean RTSPClient::playMediaSubsession(MediaSubsession& subsession,
 					double start, double end, float scale,
 					Boolean /*hackForDSS*/) {
+	log("playMediaSubsession");
   // NOTE: The "hackForDSS" flag is no longer supported.  (However, we will consider resupporting it
   // if we get reports that it is still needed.)
   fWatchVariableForSyncInterface = 0;
@@ -1929,10 +1972,12 @@ Boolean RTSPClient::parseRTSPURLUsernamePassword(char const* url,
 }
 
 void RTSPClient::responseHandlerForSyncInterface(RTSPClient* rtspClient, int responseCode, char* responseString) {
+	log("responseHandlerForSyncInterface");
   if (rtspClient != NULL) rtspClient->responseHandlerForSyncInterface1(responseCode, responseString);
 }
 
 void RTSPClient::responseHandlerForSyncInterface1(int responseCode, char* responseString) {
+	log("responseHandlerForSyncInterface1");
   // If we have a 'timeout task' pending, then unschedule it:
   if (fTimeoutTask != NULL) envir().taskScheduler().unscheduleDelayedTask(fTimeoutTask);
 
@@ -1945,10 +1990,12 @@ void RTSPClient::responseHandlerForSyncInterface1(int responseCode, char* respon
 }
 
 void RTSPClient::timeoutHandlerForSyncInterface(void* rtspClient) {
+	log("timeoutHandlerForSyncInterface");
   if (rtspClient != NULL) ((RTSPClient*)rtspClient)->timeoutHandlerForSyncInterface1();
 }
 
 void RTSPClient::timeoutHandlerForSyncInterface1() {
+	log("timeoutHandlerForSyncInterface1");
   // A RTSP command has timed out, so we should have a queued request record.  Disable it by setting its response handler to NULL.
   // (Because this is a synchronous interface, there should be exactly one pending response handler - for "fCSeq".)
   // all of them.)

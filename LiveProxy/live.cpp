@@ -358,6 +358,9 @@ void continueAfterPLAY(RTSPClient* rtspClient, int resultCode, char* resultStrin
 	UsageEnvironment& env = rtspClient->envir(); // alias
 	StreamClientState& scs = ((MyRTSPClient*)rtspClient)->scs; // alias
 
+	TRACE_INFO("rtspClient=%d", rtspClient);
+	TRACE_INFO("env=%d", env);
+	TRACE_INFO("scs=%d", scs);
 
 	if (resultCode != 0) 
 	{
@@ -520,6 +523,8 @@ CstreamMedia::CstreamMedia()
 	hRecvEvent=NULL;
 	hRecvDataThread=NULL;
 	hFrameListLock=NULL;
+
+	TRACE_DEBUG("constructor");
 }
 
 /**
@@ -573,7 +578,9 @@ returns 0 if the stream is opened successfully
 */
 int CstreamMedia::rtspClientOpenStream(const char* url)
 {
-	TRACE_INFO("RTSP Open Stream URL=%s",url);
+	//TRACE_INFO("m_state=%d", m_state);
+	TRACE_INFO("url=%s",url);
+
 	if (m_state >= RTSP_STATE_OPENED)
 	{
 		TRACE_ERROR("rtspClientOpenStream already open");
@@ -845,18 +852,22 @@ Start streaming video from the open stream
 */
 int CstreamMedia::rtspClientPlayStream(const char* url)
 {
-	TRACE_INFO("RTSP play Stream URL=%s",url);
-	this->m_url=url;
-	if (m_state == RTSP_STATE_OPENED)
-	{
-		event          = 0;
+	TRACE_INFO("url=%s", url);
+	this->m_url = url;
+	if (m_state == RTSP_STATE_OPENED) {
+		TRACE_INFO("PlayStream: To start");
+		event = 0;
 		hDataThreadReady = CreateEvent(NULL, FALSE, FALSE, NULL);
-		hRecvEvent     = CreateEvent(NULL, FALSE, FALSE, NULL);
-		hRecvDataThread= CreateThread(NULL, 0, rtspRecvDataThread, this, 0, NULL);
+		hRecvEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		hRecvDataThread = CreateThread(NULL, 0, rtspRecvDataThread, this, 0, NULL);
 
 		Sleep(5);
+	} else if (m_state == RTSP_STATE_PLAYING) {
+		TRACE_INFO("PlayStream: ALREADY playing");
+	} else {
+		TRACE_INFO("PlayStream: NOT playing, state=%d", m_state);
 	}
-	m_state  = RTSP_STATE_PLAYING;
+	m_state = RTSP_STATE_PLAYING;
 
 	return 0;
 }
@@ -866,7 +877,7 @@ Query the RTSP stream for media information
 ie width and height of the frame
 
 */
-int CstreamMedia::rtspClinetGetMediaInfo(enum CodecType codectype, MediaInfo& mediainfo)
+int CstreamMedia::rtspClientGetMediaInfo(enum CodecType codectype, MediaInfo& mediainfo)
 {
 	TRACE_INFO("RTSP get media info");
 	StreamTrack *tr;
@@ -984,18 +995,24 @@ bool CstreamMedia::GetFrame(BYTE *pData, int bufferSize)
 		return false;
 	}
 
+	TRACE_DEBUG("get frame size: %d", bufferSize);
+
 	try{
 		MyVideoSink *sink = ((MyRTSPClient*)rtsp)->get_sink(); // alias
-		if(sink!=NULL && sink->get_FrameQueue() != NULL)
-		{
+		//TRACE_DEBUG("myVideoSink=%d", sink);
+		if (sink != NULL && sink->get_FrameQueue() != NULL) {
 			frame  = sink->get_FrameQueue()->get();
-			if (frame!=NULL && bufferSize>=frame->frameHead.FrameLen)
-			{
-				memcpy((char *)pData, frame->pdata, frame->frameHead.FrameLen);
-				TRACE_DEBUG( "!!rtspClientReadFrame len = %d count = %d", frame->frameHead.FrameLen , sink->get_FrameQueue()->get_Count());		
-				DeleteFrame(frame);
-				return (true);
-			}		
+			TRACE_DEBUG("frame=%d", frame);
+			if (frame != NULL) {
+				TRACE_DEBUG("frameHead=%d", frame->frameHead);
+				TRACE_DEBUG("frameLen=%d", frame->frameHead.FrameLen);
+				if (bufferSize >= frame->frameHead.FrameLen) {
+					memcpy((char *)pData, frame->pdata, frame->frameHead.FrameLen);
+					TRACE_DEBUG( "!!rtspClientReadFrame len = %d count = %d", frame->frameHead.FrameLen , sink->get_FrameQueue()->get_Count());		
+					DeleteFrame(frame);
+					return (true);
+				}
+			}
 
 			TRACE_ERROR( "no frames left in queue rtspClientReadFrame fail");
 			return false;

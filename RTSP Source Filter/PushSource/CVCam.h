@@ -71,13 +71,13 @@ public:
     ~CVCamStream();
 
     HRESULT FillBuffer(IMediaSample *pms);
-	HRESULT FillBuffer0(IMediaSample *pms);
 
     HRESULT DecideBufferSize(IMemAllocator *pIMemAlloc, ALLOCATOR_PROPERTIES *pProperties);
     HRESULT CheckMediaType(const CMediaType *pMediaType);
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
+	HRESULT OnThreadStartPlay(void);
     
 private:
     CVCam *m_pParent;

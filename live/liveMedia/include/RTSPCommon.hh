@@ -52,6 +52,8 @@ Boolean parseRTSPRequestString(char const *reqStr, unsigned reqStrSize,
 Boolean parseRangeParam(char const* paramStr, double& rangeStart, double& rangeEnd);
 Boolean parseRangeHeader(char const* buf, double& rangeStart, double& rangeEnd);
 
+void log(char const*msg);
+
 char const* dateHeader(); // A "Date:" header that can be used in a RTSP (or HTTP) response 
 
 #endif

@@ -117,7 +117,7 @@ private:
 	//The rtsp thread
 	int rtspClientOpenStream(const char* filename);
 	int rtspClientPlayStream(const char* url);
-	int rtspClinetGetMediaInfo(enum CodecType codectype, MediaInfo& mediainfo);
+	int rtspClientGetMediaInfo(enum CodecType codectype, MediaInfo& mediainfo);
 	int rtspClientCloseStream(void);
 	
 	//Queue management

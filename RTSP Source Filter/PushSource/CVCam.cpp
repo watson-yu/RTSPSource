@@ -48,6 +48,9 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual Cam"),phr, pParent, pPinName), m_pParent(pParent)
 {
+	m_currentVideoState = NoVideo;
+	m_streamMedia = NULL;
+
     // Set the default media type as 320x240x24@15
     GetMediaType(4, &m_mt);
 }
@@ -76,50 +79,12 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 //  Camera device.
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT CVCamStream::FillBuffer0(IMediaSample *pms)
-{
-    REFERENCE_TIME rtNow;
-    
-    REFERENCE_TIME avgFrameTime = ((VIDEOINFOHEADER*)m_mt.pbFormat)->AvgTimePerFrame;
-
-    rtNow = m_rtLastTime;
-    m_rtLastTime += avgFrameTime;
-    pms->SetTime(&rtNow, &m_rtLastTime);
-    pms->SetSyncPoint(TRUE);
-
-    BYTE *pData;
-    long lDataLen;
-    pms->GetPointer(&pData);
-    lDataLen = pms->GetSize();
-    for(int i = 0; i < lDataLen; ++i)
-        pData[i] = rand();
-
-    return NOERROR;
-} // FillBuffer
-
 HRESULT CVCamStream::FillBuffer(IMediaSample *pSample)
 {
+    TRACE_DEBUG("FillBuffer, pSample=%d", pSample->GetSize());
+
 	if (FALSE) {
 		return NO_ERROR;
-	}
-	if (TRUE) {
-	    REFERENCE_TIME rtNow;
-    
-		REFERENCE_TIME avgFrameTime = ((VIDEOINFOHEADER*)m_mt.pbFormat)->AvgTimePerFrame;
-
-		rtNow = m_rtLastTime;
-		m_rtLastTime += avgFrameTime;
-		pSample->SetTime(&rtNow, &m_rtLastTime);
-		pSample->SetSyncPoint(TRUE);
-
-		BYTE *pData;
-		long lDataLen;
-		pSample->GetPointer(&pData);
-		lDataLen = pSample->GetSize();
-		for(int i = 0; i < lDataLen; ++i)
-			pData[i] = rand();
-
-		return NOERROR;
 	}
 
 	bool syncPoint;
@@ -138,6 +103,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pSample)
 		// Copy the DIB bits over into our filter's output buffer.
 		//This is where the magic happens, call the pipeline to fill our buffer
 		rc = ProcessVideo(pSample);
+		TRACE_DEBUG("processVideo rc=%d", rc);
 		//if (TRUE) return NOERROR;
 
 		if (rc)
@@ -166,6 +132,26 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pSample)
 
 bool CVCamStream::ProcessVideo(IMediaSample *pSample)
 {
+	if (TRUE) {
+		REFERENCE_TIME rtNow;
+		REFERENCE_TIME avgFrameTime = ((VIDEOINFOHEADER*)m_mt.pbFormat)->AvgTimePerFrame;
+
+		rtNow = m_rtLastTime;
+		m_rtLastTime += avgFrameTime;
+			pSample->SetTime(&rtNow, &m_rtLastTime);
+			pSample->SetSyncPoint(TRUE);
+
+			BYTE *pData;
+			long lDataLen;
+			pSample->GetPointer(&pData);
+			lDataLen = pSample->GetSize();
+			//for(int i = 0; i < lDataLen; ++i) pData[i] = rand();
+			bool rc = m_streamMedia->GetFrame(pData, lDataLen);
+			if (rc) m_currentVideoState = Playing;
+
+			return TRUE;
+	}
+
 	bool rc=true;
 	long cbData;
 	BYTE *pData;
@@ -182,16 +168,19 @@ bool CVCamStream::ProcessVideo(IMediaSample *pSample)
 		pData[i] = rand();
 	
 	rc=m_streamMedia->GetFrame(pData, bufferSize);
+	TRACE_DEBUG("getFrame rc=%d", rc);
 
 	//if (rc) return TRUE;
 
-	if(TRUE || rc)
+	if(rc)
 	{
 		m_lostFrameBufferCount=0;
 		m_currentVideoState=Playing;
 	}else{
 		//paint black video to indicate a lose
+		/*
 		int count=((CVCam*)this->m_pFilter)->m_transportUrl->get_LostFrameCount();
+		TRACE_DEBUG("lostFrameCount=%d", count);
 		if(m_lostFrameBufferCount>count)
 		{
 			if(!(m_currentVideoState==VideoState::Lost))
@@ -213,6 +202,7 @@ bool CVCamStream::ProcessVideo(IMediaSample *pSample)
 			//if(m_currentVideoState==VideoState::Lost) Sleep(1000);
 
 		}
+		*/
 	}
 	return rc;
 }
@@ -238,10 +228,11 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 // See Directshow help topic for IAMStreamConfig for details on this method
 HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
 {
+
     if(iPosition < 0) return E_INVALIDARG;
     if(iPosition > 8) return VFW_S_NO_MORE_ITEMS;
+	TRACE_DEBUG("position=%d", iPosition);
 
-	TRACE_DEBUG(  "GetMediaType");
 	TransportUrl *url=((CVCam*)this->m_pFilter)->m_transportUrl;
 	QueryVideo(url);
 
@@ -284,8 +275,8 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
 int CVCamStream::QueryVideo(TransportUrl * url)
 {
 	int ret=-1;
+	TRACE_DEBUG("videoState=%d", m_currentVideoState);
 
-	TRACE_INFO("Query video");
 	if(!(m_currentVideoState==VideoState::NoVideo||m_currentVideoState==VideoState::Lost)) 
 	{
 		TRACE_INFO("Video already configured, exiting");
@@ -296,8 +287,11 @@ int CVCamStream::QueryVideo(TransportUrl * url)
 	//if(!url->hasUrl())
 	//{
 		//TRACE_INFO("Missing the URL");
-		LPCOLESTR str = OLESTR("rtsp://192.168.1.1");///h264?w=848&h=480");
+		LPCOLESTR str = OLESTR("rtspsource://192.168.1.1/h264?w=640&h=360&Width=640&Height=360&fps=30&br=400000");
 		url = new TransportUrl(str);
+		((CVCam*)this->m_pFilter)->m_transportUrl = url;
+
+		TRACE_DEBUG("RTSP URL: %s", url->get_RtspUrl());
 		//if (! url->hasUrl()) return 0;//ret;
 	//}
 	//if (True) return 0;
@@ -305,15 +299,21 @@ int CVCamStream::QueryVideo(TransportUrl * url)
 	try
 	{
 		//TRACE_INFO("Try to open the RTSP video stream");
-		if(m_streamMedia==NULL)
+		if (m_streamMedia==NULL)
 			m_streamMedia=new CstreamMedia();
+		TRACE_DEBUG("CstreamMedia=%d", m_streamMedia);
 
+		TRACE_DEBUG("before rtspClientOpenStream");
 		ret = m_streamMedia->rtspClientOpenStream((const char *)url->get_RtspUrl());
+		TRACE_DEBUG("OpenStream result=%d", ret);
 		if (ret < 0)
 		{
 			//TRACE_ERROR( "Unable to open rtsp video stream ret=%d", ret);
-			return E_FAIL;	
+			return E_FAIL;
 		}
+		//if (m_currentVideoState != Playing)
+		//	m_streamMedia->rtspClientPlayStream(url->get_RtspUrl());
+		//m_currentVideoState = Playing;
 	}
 	catch(...)
 	{
@@ -329,7 +329,7 @@ int CVCamStream::QueryVideo(TransportUrl * url)
 	MediaInfo videoMediaInfo;
 	try{
 		//TRACE_INFO("Get Media Info");
-		ret= m_streamMedia->rtspClinetGetMediaInfo(CODEC_TYPE_VIDEO, videoMediaInfo);
+		ret= m_streamMedia->rtspClientGetMediaInfo(CODEC_TYPE_VIDEO, videoMediaInfo);
 		if(ret < 0)
 		{	
 			//TRACE_CRITICAL( "Unable to get media info from RTSP stream.  ret=%d (url=%s)", ret,url->get_Url());
@@ -406,9 +406,46 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc, ALLOCATOR_PROPERTIE
 HRESULT CVCamStream::OnThreadCreate()
 {
     m_rtLastTime = 0;
-    return NOERROR;
+	//return NOERROR;
+
+	HRESULT hr = S_OK;
+	hr = CSourceStream::OnThreadCreate();
+	TransportUrl *url = ((CVCam*)this->m_pFilter)->m_transportUrl;
+
+	TRACE_INFO("Open Stream");
+	if (m_streamMedia == NULL) m_streamMedia = new CstreamMedia();
+	int ret = m_streamMedia->rtspClientOpenStream(url->get_RtspUrl());
+
+	if (ret != 0) {
+		TRACE_INFO("Unable to open stream ret=%d", ret);
+		hr = E_FAIL;
+	}
+
+	TRACE_INFO("OnThreadCreate. HRESULT = %#x", hr);
+	return hr;
 } // OnThreadCreate
 
+/**
+* FillBuffer is about to get called for the first time
+* do any prep work here
+*/
+HRESULT CVCamStream::OnThreadStartPlay(void)
+{
+	TRACE_INFO("OnThreadStartPlay");
+
+	HRESULT hr = S_OK;
+	hr = CSourceStream::OnThreadStartPlay();
+	TRACE_INFO("Play Stream");
+	TransportUrl *url=((CVCam*)this->m_pFilter)->m_transportUrl;
+	int ret = m_streamMedia->rtspClientPlayStream(url->get_RtspUrl());
+	if (ret != 0) {
+		TRACE_ERROR("Unable to play stream ret=%d", ret);
+		hr=E_FAIL;
+	}
+
+	TRACE_DEBUG( "OnThreadStartPlay. HRESULT = %#x", hr);
+	return hr;
+}
 
 //////////////////////////////////////////////////////////////////////////
 //  IAMStreamConfig
