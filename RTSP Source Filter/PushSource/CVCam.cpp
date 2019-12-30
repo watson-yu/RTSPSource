@@ -138,10 +138,10 @@ bool CVCamStream::ProcessVideo(IMediaSample *pSample)
 
 		rtNow = m_rtLastTime;
 		m_rtLastTime += avgFrameTime;
-			pSample->SetTime(&rtNow, &m_rtLastTime);
-			pSample->SetSyncPoint(TRUE);
+		pSample->SetTime(&rtNow, &m_rtLastTime);
+		pSample->SetSyncPoint(TRUE);
 
-			BYTE *pData;
+		BYTE *pData;
 			long lDataLen;
 			pSample->GetPointer(&pData);
 			lDataLen = pSample->GetSize();
@@ -510,20 +510,20 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvscc->guid = FORMAT_VideoInfo;
     pvscc->VideoStandard = AnalogVideo_None;
     pvscc->InputSize.cx = 640;
-    pvscc->InputSize.cy = 480;
+    pvscc->InputSize.cy = 360;
     pvscc->MinCroppingSize.cx = 80;
-    pvscc->MinCroppingSize.cy = 60;
+    pvscc->MinCroppingSize.cy = 45;
     pvscc->MaxCroppingSize.cx = 640;
-    pvscc->MaxCroppingSize.cy = 480;
+    pvscc->MaxCroppingSize.cy = 360;
     pvscc->CropGranularityX = 80;
-    pvscc->CropGranularityY = 60;
+    pvscc->CropGranularityY = 45;
     pvscc->CropAlignX = 0;
     pvscc->CropAlignY = 0;
 
     pvscc->MinOutputSize.cx = 80;
-    pvscc->MinOutputSize.cy = 60;
+    pvscc->MinOutputSize.cy = 45;
     pvscc->MaxOutputSize.cx = 640;
-    pvscc->MaxOutputSize.cy = 480;
+    pvscc->MaxOutputSize.cy = 360;
     pvscc->OutputGranularityX = 0;
     pvscc->OutputGranularityY = 0;
     pvscc->StretchTapsX = 0;
@@ -532,8 +532,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pvscc->ShrinkTapsY = 0;
     pvscc->MinFrameInterval = 200000;   //50 fps
     pvscc->MaxFrameInterval = 50000000; // 0.2 fps
-    pvscc->MinBitsPerSecond = (80 * 60 * 3 * 8) / 5;
-    pvscc->MaxBitsPerSecond = 640 * 480 * 3 * 8 * 50;
+    pvscc->MinBitsPerSecond = (80 * 45 * 3 * 8) / 5;
+    pvscc->MaxBitsPerSecond = 640 * 360 * 3 * 8 * 50;
 
     return S_OK;
 }

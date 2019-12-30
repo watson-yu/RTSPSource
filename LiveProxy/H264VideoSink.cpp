@@ -72,8 +72,7 @@ Keep retrieving frames from the source
 Boolean H264VideoSink::continuePlaying() 
 {
 	TRACE_INFO("continuePlaying");
-	if (fSource == NULL) 
-	{
+	if (fSource == NULL) {
 		TRACE_ERROR("no source for continue play");
 		return False;
 	}
@@ -88,7 +87,7 @@ Called by the live555 code once we have a frame
 void H264VideoSink::afterGettingFrame(void* clientData, unsigned frameSize, unsigned numTruncatedBytes,
 				  struct timeval presentationTime, unsigned durationInMicroseconds) 
 {
-	TRACE_INFO("afterGettingFrame. FrameSize=%d",frameSize);
+	//TRACE_INFO("afterGettingFrame. FrameSize=%d",frameSize);
 	H264VideoSink* sink = (H264VideoSink*)clientData;
 	sink->afterGettingFrame1(frameSize, presentationTime);
 	if (sink->continuePlaying() == false)
@@ -103,32 +102,34 @@ Prepare the video frame for decoding
 */
 void H264VideoSink::afterGettingFrame1(unsigned frameSize, struct timeval presentationTime) 
 {
-	TRACE_INFO("afterGettingFrame1");
-    int got_frame = 0; 
+	TRACE_INFO("afterGettingFrame1, frameSize=%d", frameSize);
+    int got_frame = 0;
     unsigned int size = frameSize;
     unsigned char *pBuffer = m_buffer + m_fPos;
     uint8_t* data = (uint8_t*)pBuffer;
     uint8_t startCode4[] = {0x00, 0x00, 0x00, 0x01};
     uint8_t startCode3[] = {0x00, 0x00, 0x01};
-	FrameInfo	*frame=NULL;
+	FrameInfo *frame = NULL;
         
-	if(size<4){
+	if (size < 4) {
+		TRACE_INFO("break, size=%d", size);
 		return;
     }
-    if(memcmp(startCode3, pBuffer, sizeof(startCode3)) == 0)
-	{
+    if (memcmp(startCode3, pBuffer, sizeof(startCode3)) == 0) {
 		data += 3;
-    }else if(memcmp(startCode4, pBuffer, sizeof(startCode4)) == 0){
+    } else if(memcmp(startCode4, pBuffer, sizeof(startCode4)) == 0) {
 		data += 4;
-    }else{
+    } else {
 		pBuffer -= 3;
 		size += 3;
     }
 
 	// send the frame out to the decoder
-	frame=m_decoder->DecodeFrame(pBuffer, size);
-	if(frame!=NULL)
+	frame = m_decoder->DecodeFrame(pBuffer, size);
+	if (frame != NULL) {
+		TRACE_INFO("decoded frame=%d", frame);
 		m_frameQueue->put(frame);
+	}
 }
  
  

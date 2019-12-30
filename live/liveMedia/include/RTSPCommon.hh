@@ -21,6 +21,8 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #ifndef _RTSP_COMMON_HH
 #define _RTSP_COMMON_HH
 
+#include "debug.h"
+
 #ifndef _BOOLEAN_HH
 #include "Boolean.hh"
 #endif
@@ -51,8 +53,6 @@ Boolean parseRTSPRequestString(char const *reqStr, unsigned reqStrSize,
 
 Boolean parseRangeParam(char const* paramStr, double& rangeStart, double& rangeEnd);
 Boolean parseRangeHeader(char const* buf, double& rangeStart, double& rangeEnd);
-
-void log(char const*msg);
 
 char const* dateHeader(); // A "Date:" header that can be used in a RTSP (or HTTP) response 
 

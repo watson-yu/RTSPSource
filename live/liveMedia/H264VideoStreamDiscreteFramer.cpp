@@ -22,6 +22,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 // Implementation
 
 #include "H264VideoStreamDiscreteFramer.hh"
+#include "debug.h"
 
 H264VideoStreamDiscreteFramer*
 H264VideoStreamDiscreteFramer::createNew(UsageEnvironment& env, FramedSource* inputSource) {
@@ -38,6 +39,7 @@ H264VideoStreamDiscreteFramer::~H264VideoStreamDiscreteFramer() {
 }
 
 void H264VideoStreamDiscreteFramer::doGetNextFrame() {
+	log2("===== H264VideoStreamDiscreteFramer: doGetNextFrame");
   // Arrange to read data (which should be a complete H.264 NAL unit)
   // from our data source, directly into the client's input buffer.
   // After reading this, we'll do some parsing on the frame.

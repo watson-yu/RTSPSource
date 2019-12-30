@@ -26,6 +26,14 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <unix.h>
 #endif
 
+void log3(char const*msg) {
+	if (msg) {
+		FILE *fp = fopen("debug2.log", "w+");
+		fprintf(fp, msg);
+		fprintf(fp, "\n");
+		fclose(fp);
+	}
+}
 ////////// BasicTaskScheduler //////////
 
 BasicTaskScheduler* BasicTaskScheduler::createNew() {
@@ -54,6 +62,7 @@ BasicTaskScheduler::~BasicTaskScheduler() {
 #endif
 
 void BasicTaskScheduler::SingleStep(unsigned maxDelayTime) {
+	//log3("##### BasicTaskScheduler::SingleStep");
   fd_set readSet = fReadSet; // make a copy for this select() call
   fd_set writeSet = fWriteSet; // ditto
   fd_set exceptionSet = fExceptionSet; // ditto
@@ -189,6 +198,7 @@ void BasicTaskScheduler::SingleStep(unsigned maxDelayTime) {
 
 void BasicTaskScheduler
   ::setBackgroundHandling(int socketNum, int conditionSet, BackgroundHandlerProc* handlerProc, void* clientData) {
+	log3("##### BasicTaskScheduler::setBackgroundHandling");
   if (socketNum < 0) return;
   FD_CLR((unsigned)socketNum, &fReadSet);
   FD_CLR((unsigned)socketNum, &fWriteSet);
@@ -210,6 +220,7 @@ void BasicTaskScheduler
 }
 
 void BasicTaskScheduler::moveSocketHandling(int oldSocketNum, int newSocketNum) {
+	log3("##### BasicTaskScheduler::moveSocketHandling");
   if (oldSocketNum < 0 || newSocketNum < 0) return; // sanity check
   if (FD_ISSET(oldSocketNum, &fReadSet)) {FD_CLR((unsigned)oldSocketNum, &fReadSet); FD_SET((unsigned)newSocketNum, &fReadSet);}
   if (FD_ISSET(oldSocketNum, &fWriteSet)) {FD_CLR((unsigned)oldSocketNum, &fWriteSet); FD_SET((unsigned)newSocketNum, &fWriteSet);}

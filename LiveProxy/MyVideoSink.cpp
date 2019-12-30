@@ -64,6 +64,7 @@ Initialize the video buffer with the header information
 */
 void MyVideoSink::AddData(uint8_t* aData, int aSize)
 {
+	TRACE_INFO("size=%d", aSize);
     memcpy(m_buffer + m_fPos, aData, aSize);
     m_fPos += aSize;
 }

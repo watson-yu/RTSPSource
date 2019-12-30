@@ -94,6 +94,7 @@
     <ClCompile Include="ByteStreamMemoryBufferSource.cpp" />
     <ClCompile Include="ByteStreamMultiFileSource.cpp" />
     <ClCompile Include="DarwinInjector.cpp" />
+    <ClCompile Include="debug.cpp" />
     <ClCompile Include="DeviceSource.cpp" />
     <ClCompile Include="DigestAuthentication.cpp" />
     <ClCompile Include="DVVideoFileServerMediaSubsession.cpp" />
@@ -218,6 +219,9 @@
     <ClCompile Include="VP8VideoRTPSource.cpp" />
     <ClCompile Include="WAVAudioFileServerMediaSubsession.cpp" />
     <ClCompile Include="WAVAudioFileSource.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\debug.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

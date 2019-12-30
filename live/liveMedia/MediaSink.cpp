@@ -21,6 +21,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "MediaSink.hh"
 #include "GroupsockHelper.hh"
 #include <string.h>
+#include "debug.h"
 
 ////////// MediaSink //////////
 
@@ -62,15 +63,18 @@ Boolean MediaSink::startPlaying(MediaSource& source,
 				void* afterClientData) {
   // Make sure we're not already being played:
   if (fSource != NULL) {
+	log2("MediaSink: already Playing");
     envir().setResultMsg("This sink is already being played");
     return False;
   }
 
   // Make sure our source is compatible:
   if (!sourceIsCompatibleWithUs(source)) {
+	log2("MediaSink: not compatible");
     envir().setResultMsg("MediaSink::startPlaying(): source is not compatible!");
     return False;
   }
+  log2("MediaSink: startPlaying");
   fSource = (FramedSource*)&source;
 
   fAfterFunc = afterFunc;
@@ -79,6 +83,7 @@ Boolean MediaSink::startPlaying(MediaSource& source,
 }
 
 void MediaSink::stopPlaying() {
+	log2("MediaSink: stopPlaying");
   // First, tell the source that we're no longer interested:
   if (fSource != NULL) fSource->stopGettingFrames();
 

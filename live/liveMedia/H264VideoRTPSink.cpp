@@ -21,6 +21,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "H264VideoRTPSink.hh"
 #include "H264VideoStreamFramer.hh"
 #include "Base64.hh"
+#include "debug.h"
 
 ////////// H264VideoRTPSink implementation //////////
 
@@ -29,6 +30,7 @@ H264VideoRTPSink
 		   unsigned char rtpPayloadFormat)
   : VideoRTPSink(env, RTPgs, rtpPayloadFormat, 90000, "H264"),
     fOurFragmenter(NULL), fFmtpSDPLine(NULL) {
+	log2("H264VideoRTPSink: constructor");
 }
 
 H264VideoRTPSink::~H264VideoRTPSink() {
@@ -49,6 +51,7 @@ Boolean H264VideoRTPSink::sourceIsCompatibleWithUs(MediaSource& source) {
 }
 
 Boolean H264VideoRTPSink::continuePlaying() {
+	log2("H264VideoRTPSink: continuePlaying");
   // First, check whether we have a 'fragmenter' class set up yet.
   // If not, create it now:
   if (fOurFragmenter == NULL) {
@@ -62,6 +65,7 @@ Boolean H264VideoRTPSink::continuePlaying() {
 }
 
 void H264VideoRTPSink::stopPlaying() {
+	log2("H264VideoRTPSink: stopPlaying");
   // First, call the parent class's implementation, to stop our fragmenter object (and its source):
   MultiFramedRTPSink::stopPlaying();
 
@@ -74,6 +78,7 @@ void H264VideoRTPSink::doSpecialFrameHandling(unsigned /*fragmentationOffset*/,
 					      unsigned /*numBytesInFrame*/,
 					      struct timeval framePresentationTime,
 					      unsigned /*numRemainingBytes*/) {
+	log2("H264VideoRTPSink: doSpecialFrameHandling");
   // Set the RTP 'M' (marker) bit iff
   // 1/ The most recently delivered fragment was the end of (or the only fragment of) an NAL unit, and
   // 2/ This NAL unit was the last NAL unit of an 'access unit' (i.e. video frame).
@@ -98,6 +103,7 @@ Boolean H264VideoRTPSink
 }
 
 char const* H264VideoRTPSink::auxSDPLine() {
+	log2("H264VideoRTPSink: auxSDPLine");
   // Generate a new "a=fmtp:" line each time, using parameters from
   // our framer source (in case they've changed since the last time that
   // we were called):
@@ -160,6 +166,7 @@ H264FUAFragmenter::~H264FUAFragmenter() {
 }
 
 void H264FUAFragmenter::doGetNextFrame() {
+	log2("===== H264VideoRTPSink: doGetNextFrame");
   if (fNumValidDataBytes == 1) {
     // We have no NAL unit data currently in the buffer.  Read a new one:
     fInputSource->getNextFrame(&fInputBuffer[1], fInputBufferSize - 1,
@@ -237,6 +244,7 @@ void H264FUAFragmenter::afterGettingFrame(void* clientData, unsigned frameSize,
 					  unsigned numTruncatedBytes,
 					  struct timeval presentationTime,
 					  unsigned durationInMicroseconds) {
+	log2("H264VideoRTPSink: afterGettingFrame");
   H264FUAFragmenter* fragmenter = (H264FUAFragmenter*)clientData;
   fragmenter->afterGettingFrame1(frameSize, numTruncatedBytes, presentationTime,
 				 durationInMicroseconds);
@@ -246,6 +254,7 @@ void H264FUAFragmenter::afterGettingFrame1(unsigned frameSize,
 					   unsigned numTruncatedBytes,
 					   struct timeval presentationTime,
 					   unsigned durationInMicroseconds) {
+	log2("H264VideoRTPSink: afterGettingFrame1");
   fNumValidDataBytes += frameSize;
   fSaveNumTruncatedBytes = numTruncatedBytes;
   fPresentationTime = presentationTime;

@@ -23,6 +23,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include "RTPInterface.hh"
 #include <GroupsockHelper.hh>
 #include <stdio.h>
+#include "debug.h"
 
 ////////// Helper Functions - Definition //////////
 
@@ -202,6 +203,7 @@ Boolean RTPInterface::sendPacket(unsigned char* packet, unsigned packetSize) {
 
 void RTPInterface
 ::startNetworkReading(TaskScheduler::BackgroundHandlerProc* handlerProc) {
+	log2("     RTPInterface: startNetworkReading");
   // Normal case: Arrange to read UDP packets:
   envir().taskScheduler().
     turnOnBackgroundReadHandling(fGS->socketNum(), handlerProc, fOwner);

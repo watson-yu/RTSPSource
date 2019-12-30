@@ -20,6 +20,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 #include "FramedSource.hh"
 #include <stdlib.h>
+#include "debug.h"
 
 ////////// FramedSource //////////
 
@@ -59,6 +60,7 @@ void FramedSource::getNextFrame(unsigned char* to, unsigned maxSize,
 				void* afterGettingClientData,
 				onCloseFunc* onCloseFunc,
 				void* onCloseClientData) {
+	log2("-----FramedSource: getNextFrame");
   // Make sure we're not already being read:
   if (fIsCurrentlyAwaitingData) {
     envir() << "FramedSource[" << this << "]::getNextFrame(): attempting to read more than once at the same time!\n";
@@ -79,6 +81,7 @@ void FramedSource::getNextFrame(unsigned char* to, unsigned maxSize,
 }
 
 void FramedSource::afterGetting(FramedSource* source) {
+  log2("-----FramedSource: afterGetting");
   source->fIsCurrentlyAwaitingData = False;
       // indicates that we can be read again
       // Note that this needs to be done here, in case the "fAfterFunc"

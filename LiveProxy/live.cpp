@@ -4,7 +4,7 @@
 #include "live.h"
 
 
-#define keepAliveTimer 60 * 1000000 //how many micro seconds between each keep alive
+#define keepAliveTimer 30 * 1000000 //how many micro seconds between each keep alive
 
 static unsigned rtspClientCount = 0; // Counts how many streams (i.e., "RTSPClient"s) are currently in use.
 
@@ -373,7 +373,7 @@ void continueAfterPLAY(RTSPClient* rtspClient, int resultCode, char* resultStrin
 	TRACE_INFO( "Started playing session");
 
 	//setup our keep alive using a delayed task
-	TRACE_INFO( "Schedule keep alive task");
+	TRACE_INFO( "Schedule keep alive TASK");
 	env.taskScheduler().scheduleDelayedTask(keepAliveTimer, onScheduledDelayedTask, rtspClient);
 }
 
@@ -478,10 +478,15 @@ void onScheduledDelayedTask(void* clientData)
 {
 	try
 	{
-		TRACE_DEBUG("On delayed task (ie Keep Alive)");
+		TRACE_DEBUG("ON delayed task (ie Keep Alive)");
+		TRACE_DEBUG("clientData=%d", clientData);
 		RTSPClient* rtspClient = (RTSPClient*)(clientData);
+		TRACE_DEBUG("rtspClient=%d", rtspClient);
 		UsageEnvironment& env = rtspClient->envir(); // alias
+		TRACE_DEBUG("env=%d", env);
 		StreamClientState& scs = ((MyRTSPClient*)rtspClient)->scs; // alias
+		TRACE_DEBUG("scs=%d", scs);
+		TRACE_DEBUG("duration=%d", scs.duration);
 		MediaSession *session = scs.session;
 
 		char * ret =NULL;
@@ -523,7 +528,7 @@ CstreamMedia::CstreamMedia()
 	hRecvEvent=NULL;
 	hRecvDataThread=NULL;
 	hFrameListLock=NULL;
-
+	TRACE_INFO("\n\n-----------------------------------------------\n");
 	TRACE_DEBUG("constructor");
 }
 
@@ -652,6 +657,7 @@ int CstreamMedia::rtspClientOpenStream(const char* url)
 	iter = new MediaSubsessionIterator(*ms);
 	while( ( sub = iter->next() ) != NULL )
 	{
+		TRACE_INFO("sub.mediumName=%s", sub->mediumName());
 		Boolean bInit;
 
 		int i_buffer = 0;
@@ -716,8 +722,12 @@ int CstreamMedia::rtspClientOpenStream(const char* url)
 			tk->waiting   = 0;
 			ZeroMemory(&tk->mediainfo, sizeof(MediaInfo));
 			tk->mediainfo.b_packetized =  1;
-			strncpy(tk->mediainfo.codecName,sub->codecName(), sizeof(tk->mediainfo.codecName));
-			tk->mediainfo.duration = sub->playEndTime()-sub->playStartTime();
+			TRACE_INFO("sub.codecName=%s", sub->codecName());
+			strncpy(tk->mediainfo.codecName, sub->codecName(), sizeof(tk->mediainfo.codecName));
+
+			TRACE_INFO("sub.playStartTime=%d", sub->playStartTime());
+			TRACE_INFO("sub.playEndTime=%d", sub->playEndTime());
+			tk->mediainfo.duration = sub->playEndTime() - sub->playStartTime();
 
 			if( !strcmp( sub->mediumName(), "video" ) )
 			{
